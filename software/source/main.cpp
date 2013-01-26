@@ -55,17 +55,51 @@ typedef xpcc::atmega::SpiMaster LedSpi;
 typedef xpcc::TLC594X< 32, LedSpi, XLAT > controller;
 
 #include <xpcc/driver/ui/led.hpp>
-typedef xpcc::led::TLC594XLed< controller, 2 > Red;
-typedef xpcc::led::TLC594XLed< controller, 3 > Green;
-typedef xpcc::led::TLC594XLed< controller, 4 > Blue;
+// 10 white LEDs in the front
+uint8_t whiteChannels[10] = {0,1,2,3,4,5,6,7,8,9};
+typedef xpcc::led::TLC594XLed< controller, whiteChannels, 10 > White;
+White white;
 
-xpcc::led::Pulse<Green> pulse;
-xpcc::led::Indicator<Blue> indicator;
-xpcc::led::DoubleIndicator<Red> strobe;
+// six red LEDs in the back, four are constant
+uint8_t redChannels[4] = {10,11,12,13};
+typedef xpcc::led::TLC594XLed< controller, redChannels, 4 > Red;
+Red red;
+// two are pulsing
+uint8_t redPulsingChannels[2] = {14,15};
+typedef xpcc::led::TLC594XLed< controller, redPulsingChannels, 2 > RedPulsing;
+xpcc::led::Pulse<RedPulsing> redPulsing(800);
+
+// two position lights
+uint8_t positionChannels[2] = {16,17};
+typedef xpcc::led::TLC594XLed< controller, positionChannels, 2 > Position;
+Position position;
+
+// two beacon lights
+uint8_t beaconChannels[2] = {18,19};
+typedef xpcc::led::TLC594XLed< controller, beaconChannels, 2 > Beacon;
+xpcc::led::Indicator<Beacon> beacon(1300, 0.2f, 75, 100);
+
+// two strobe lights
+uint8_t strobeChannels[2] = {20,21};
+typedef xpcc::led::TLC594XLed< controller, strobeChannels, 2 > Strobe;
+xpcc::led::DoubleIndicator<Strobe> strobe(1700, 0.1f, 0.2f, 0.1f, 20, 60);
+
+// five indicator lights left
+uint8_t indicatorLeftChannels[5] = {22,23,24,25,26};
+typedef xpcc::led::TLC594XLed< controller, indicatorLeftChannels, 5 > IndicatorLeft;
+xpcc::led::Indicator<IndicatorLeft> indicatorLeft;
+
+// five indicator lights left
+uint8_t indicatorRightChannels[5] = {27,28,29,30,31};
+typedef xpcc::led::TLC594XLed< controller, indicatorRightChannels, 5 > IndicatorRight;
+xpcc::led::Indicator<IndicatorRight> indicatorRight;
+
 
 // TIMEOUT ####################################################################
 #include <xpcc/workflow.hpp>
-xpcc::Timeout<> motionTimer(20);
+xpcc::Timeout<> motionTimer(10000);
+bool inMotion = false;
+bool inMotionPrev = false;
 
 
 // DEBUG ######################################################################
@@ -78,13 +112,7 @@ SoftwareUart uart(115200);
 // INTERRUPTS #################################################################
 ISR(TIMER0_COMPA_vect)
 {
-	// increment by 1ms
 	xpcc::Clock::increment();
-	xpcc::atomic::Unlock unlock;
-	
-	pulse.run();
-	indicator.run();
-	strobe.run();
 	
 	controller::writeChannels();
 }
@@ -93,11 +121,12 @@ ISR(INT1_vect)
 {
 	// restart the motion timer with 10 seconds
 	motionTimer.restart(10000);
+	inMotion = true;
 }
 
 ISR(INT0_vect)
 {
-	
+	// mode changes?
 }
 
 
@@ -122,29 +151,58 @@ MAIN_FUNCTION // ##############################################################
 	// Pull-up on Mode, Button and Motion pins
 	BUTTON::setInput(xpcc::atmega::PULLUP);
 	MOTION::setInput(xpcc::atmega::PULLUP);
+	TXD::setOutput();
 	RXD::setInput();
 	VOLTAGE::setInput();
 	BLANK::setOutput(xpcc::gpio::LOW);
 	SCK::setOutput();
 	MOSI::setOutput();
+	MISO::setInput();
 	
 	
-	LedSpi::initialize(LedSpi::MODE_0, LedSpi::PRESCALER_8);
-	
+	LedSpi::initialize(LedSpi::MODE_0, LedSpi::PRESCALER_2);
 	controller::initialize(0, 63, true, false);
-	controller::setDotCorrection(3, 10);
-	controller::setDotCorrection(4, 20);
-	controller::writeDotCorrection();
 	
-	// init is done, full power, Skotty!
+	
 	xpcc::atmega::enableInterrupts();
 	
-	pulse.pulse(20);
-	indicator.indicate(200);
-	strobe.indicate(20);
 	
 	while (1)
 	{
+		white.run();
+		red.run();
+		redPulsing.run();
+		position.run();
+		beacon.run();
+		strobe.run();
+		indicatorLeft.run();
+		indicatorRight.run();
 		
+		if (motionTimer.isExpired())
+		{
+			inMotion = false;
+		}
+		
+		if (inMotion != inMotionPrev)
+		{
+			inMotionPrev = inMotion;
+			
+			if (inMotion)
+			{
+				white.on(500);
+				red.on(500);
+				redPulsing.start();
+				position.on(500);
+				strobe.start();
+			}
+			else
+			{
+				white.off(500);
+				red.off(500);
+				redPulsing.stop();
+				position.off(500);
+				strobe.stop();
+			}
+		}
 	}
 }
