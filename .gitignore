@@ -1,0 +1,5 @@
+images/
+hardware/mill/
+hardware/datasheets/
+software/build/
+.sconsign.dblite
