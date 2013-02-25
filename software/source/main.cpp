@@ -49,7 +49,7 @@ GPIO__INPUT(MISO, B, 4);
 
 
 // LED FADER ##################################################################
-#include <xpcc/driver/pwm/tlc594x.hpp>
+#include <xpcc/driver/ui/led.hpp>
 
 typedef xpcc::atmega::SpiMaster LedSpi;
 typedef xpcc::TLC594X< 32, LedSpi, XLAT > controller;
