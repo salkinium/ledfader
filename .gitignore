@@ -3,3 +3,15 @@ hardware/mill/
 hardware/datasheets/
 software/build/
 .sconsign.dblite
+
+# EAGLE CAM noise
+*.BOA
+*.BOT
+*.SMB
+*.SMT
+*.SST
+*.TOP
+*.BOT
+*.DRD
+*.dri
+*.gpi
