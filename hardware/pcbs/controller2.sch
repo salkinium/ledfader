@@ -7131,13 +7131,13 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="U$4" library="bookla" deviceset="MOTION_SENSOR" device=""/>
 <part name="FRAME1" library="frames" deviceset="A4L-LOC" device=""/>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
-<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="1k"/>
-<part name="C1" library="rcl" deviceset="C-EU" device="C0603"/>
+<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
+<part name="C1" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="U$6" library="bookla" deviceset="SWITCH" device=""/>
-<part name="C2" library="rcl" deviceset="C-EU" device="C0805"/>
+<part name="C2" library="rcl" deviceset="C-EU" device="C0805" value="10uF"/>
 <part name="P+2" library="supply1" deviceset="VCC" device=""/>
-<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="1k"/>
-<part name="R3" library="rcl" deviceset="R-EU_" device="R0603" value="1k"/>
+<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
+<part name="R3" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
 <part name="U$1" library="niklas" deviceset="TLC5940" device=""/>
 <part name="U1" library="thecustomgeek" deviceset="ATMEGA328" device=""/>
 <part name="P+1" library="supply1" deviceset="VCC" device=""/>
@@ -7192,8 +7192,8 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="TP18" library="testpad" deviceset="TP" device="TP15SQ">
 <attribute name="TP_SIGNAL_NAME" value=""/>
 </part>
-<part name="C3" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C4" library="rcl" deviceset="C-EU" device="C0603"/>
+<part name="C3" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C4" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="P+7" library="supply1" deviceset="VCC" device=""/>
 <part name="GND9" library="supply1" deviceset="GND" device=""/>
 <part name="GND10" library="supply1" deviceset="GND" device=""/>
