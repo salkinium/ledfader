@@ -7837,7 +7837,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="119.38" y="60.96" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="N$4" class="0">
+<net name="RX" class="0">
 <segment>
 <pinref part="U1" gate="G$1" pin="PD0(RXD)"/>
 <pinref part="TP18" gate="G$1" pin="TP"/>
