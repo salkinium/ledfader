@@ -114,7 +114,7 @@
 <wire x1="1.425" y1="-1.225" x2="1.425" y2="1.225" width="0.127" layer="48"/>
 <wire x1="1.425" y1="1.225" x2="-1.425" y2="1.225" width="0.127" layer="48"/>
 </package>
-<package name="EVQPSD">
+<package name="EVQPSG02K">
 <smd name="A" x="-1.7" y="2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
 <smd name="B" x="1.7" y="2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
 <smd name="B@2" x="1.7" y="-2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
@@ -165,6 +165,23 @@
 <smd name="3" x="1.2" y="0" dx="0.75" dy="2" layer="1"/>
 <text x="-2.54" y="1.524" size="1.27" layer="25">&gt;NAME</text>
 <text x="-2.54" y="-2.794" size="1.27" layer="27">&gt;VALUE</text>
+</package>
+<package name="EVQPSH02K">
+<smd name="A" x="-1.7" y="2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
+<smd name="B" x="1.7" y="2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
+<smd name="B@2" x="1.7" y="-2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
+<smd name="A@2" x="-1.7" y="-2.15" dx="1.3" dy="1" layer="1" rot="R90"/>
+<wire x1="-3.05" y1="2" x2="3.05" y2="2" width="0.127" layer="49"/>
+<wire x1="3.05" y1="2" x2="3.05" y2="1.2" width="0.127" layer="49"/>
+<wire x1="3.05" y1="1.2" x2="3.05" y2="-1.2" width="0.127" layer="49"/>
+<wire x1="3.05" y1="-1.2" x2="3.05" y2="-2" width="0.127" layer="49"/>
+<wire x1="3.05" y1="-2" x2="-3.05" y2="-2" width="0.127" layer="49"/>
+<wire x1="-3.05" y1="-2" x2="-3.05" y2="2" width="0.127" layer="49"/>
+<wire x1="3.05" y1="-1.2" x2="4.35" y2="-1.2" width="0.127" layer="49"/>
+<wire x1="4.35" y1="-1.2" x2="4.35" y2="1.2" width="0.127" layer="49"/>
+<wire x1="4.35" y1="1.2" x2="3.05" y2="1.2" width="0.127" layer="49"/>
+<hole x="-1.5" y="0" drill="0.9"/>
+<hole x="1.5" y="0" drill="0.9"/>
 </package>
 </packages>
 <symbols>
@@ -275,7 +292,16 @@
 <gate name="G$1" symbol="EVQPSD" x="2.54" y="0"/>
 </gates>
 <devices>
-<device name="" package="EVQPSD">
+<device name="" package="EVQPSG02K">
+<connects>
+<connect gate="G$1" pin="P$1" pad="A A@2"/>
+<connect gate="G$1" pin="P$2" pad="B B@2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="BOSS" package="EVQPSH02K">
 <connects>
 <connect gate="G$1" pin="P$1" pad="A A@2"/>
 <connect gate="G$1" pin="P$2" pad="B B@2"/>
@@ -6134,34 +6160,34 @@ Source: AVX .. aphvc.pdf</description>
 <library name="niklas">
 <packages>
 <package name="PWP_28PIN">
-<smd name="P21" x="0.325" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P20" x="0.975" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P19" x="1.625" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P18" x="2.275" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P17" x="2.925" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P16" x="3.575" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P15" x="4.225" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P22" x="-0.325" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P23" x="-0.975" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P24" x="-1.625" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P25" x="-2.275" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P26" x="-2.925" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P27" x="-3.575" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P28" x="-4.225" y="2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P8" x="0.325" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P9" x="0.975" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P10" x="1.625" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P11" x="2.275" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P12" x="2.925" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P13" x="3.575" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P14" x="4.225" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P7" x="-0.325" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P6" x="-0.975" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P5" x="-1.625" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P4" x="-2.275" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P3" x="-2.925" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P2" x="-3.575" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
-<smd name="P1" x="-4.225" y="-2.8" dx="1.6" dy="0.3" layer="1" rot="R90"/>
+<smd name="P21" x="0.325" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P20" x="0.975" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P19" x="1.625" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P18" x="2.275" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P17" x="2.925" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P16" x="3.575" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P15" x="4.225" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P22" x="-0.325" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P23" x="-0.975" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P24" x="-1.625" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P25" x="-2.275" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P26" x="-2.925" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P27" x="-3.575" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P28" x="-4.225" y="2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P8" x="0.325" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P9" x="0.975" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P10" x="1.625" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P11" x="2.275" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P12" x="2.925" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P13" x="3.575" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P14" x="4.225" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P7" x="-0.325" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P6" x="-0.975" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P5" x="-1.625" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P4" x="-2.275" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P3" x="-2.925" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P2" x="-3.575" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
+<smd name="P1" x="-4.225" y="-2.9" dx="1.4" dy="0.3" layer="1" rot="R90"/>
 <smd name="P29" x="0" y="0" dx="9.7" dy="3.4" layer="1" stop="no" cream="no"/>
 <rectangle x1="-3.085" y1="-1.2" x2="3.085" y2="1.2" layer="29"/>
 <rectangle x1="-3.085" y1="-1.2" x2="3.085" y2="1.2" layer="31"/>
@@ -7553,14 +7579,14 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="60.96" y="53.34" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U1" gate="G$1" pin="PD6(AIN0)"/>
-<wire x1="109.22" y1="111.76" x2="111.76" y2="111.76" width="0.1524" layer="91"/>
-<label x="111.76" y="111.76" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
 <pinref part="U$3" gate="G$1" pin="BLANK"/>
 <wire x1="116.84" y1="53.34" x2="119.38" y2="53.34" width="0.1524" layer="91"/>
 <label x="119.38" y="53.34" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U1" gate="G$1" pin="PD7(AIN1)"/>
+<wire x1="109.22" y1="109.22" x2="111.76" y2="109.22" width="0.1524" layer="91"/>
+<label x="111.76" y="109.22" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="XLAT" class="0">
@@ -7570,14 +7596,14 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="60.96" y="55.88" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U1" gate="G$1" pin="PD5(T1)"/>
-<wire x1="109.22" y1="114.3" x2="111.76" y2="114.3" width="0.1524" layer="91"/>
-<label x="111.76" y="114.3" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
 <pinref part="U$3" gate="G$1" pin="XLAT"/>
 <wire x1="116.84" y1="55.88" x2="119.38" y2="55.88" width="0.1524" layer="91"/>
 <label x="119.38" y="55.88" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U1" gate="G$1" pin="PD6(AIN0)"/>
+<wire x1="109.22" y1="111.76" x2="111.76" y2="111.76" width="0.1524" layer="91"/>
+<label x="111.76" y="111.76" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$8" class="0">
@@ -7866,6 +7892,23 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <pinref part="U1" gate="G$1" pin="PB6(XTAL1/TOSC1)"/>
 <wire x1="60.96" y1="124.46" x2="58.42" y2="124.46" width="0.1524" layer="91"/>
 <label x="58.42" y="124.46" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="VPRG" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="VPRG"/>
+<wire x1="58.42" y1="63.5" x2="60.96" y2="63.5" width="0.1524" layer="91"/>
+<label x="60.96" y="63.5" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U$3" gate="G$1" pin="VPRG"/>
+<wire x1="116.84" y1="63.5" x2="119.38" y2="63.5" width="0.1524" layer="91"/>
+<label x="119.38" y="63.5" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U1" gate="G$1" pin="PB2(SS/OC1B)"/>
+<wire x1="109.22" y1="99.06" x2="111.76" y2="99.06" width="0.1524" layer="91"/>
+<label x="111.76" y="99.06" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
