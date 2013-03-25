@@ -75,8 +75,7 @@ uint8_t positionChannels[2] = {0,3};
 xpcc::led::TLC594XMultipleLed< controller > position(positionChannels, 2);
 
 // two beacon lights
-uint8_t beaconChannels[1] = {6};
-xpcc::led::TLC594XMultipleLed< controller > beaconLed(beaconChannels, 1);
+xpcc::led::TLC594XLed< controller > beaconLed(6);
 xpcc::led::Indicator beacon(&beaconLed, 2467, 0.28f, 130, 200);
 
 // two strobe lights
@@ -84,16 +83,12 @@ uint8_t strobeChannels[2] = {1,2};
 xpcc::led::TLC594XMultipleLed< controller > strobeLed(strobeChannels, 2);
 xpcc::led::DoubleIndicator strobe(&strobeLed, 1825, 0.06f, 0.075f, 0.05f, 0, 20);
 
-// five indicator lights left
-uint8_t indicatorLeftChannels[5] = {22,23,24,25,26};
-xpcc::led::TLC594XMultipleLed< controller > indicatorLeftLed(indicatorLeftChannels, 5);
-xpcc::led::Indicator indicatorLeft(&indicatorLeftLed);
+// blue stripes
+uint8_t blueChannels[7] = {20,21,22,23,24,25,26};
+xpcc::led::TLC594XMultipleLed< controller > blue(blueChannels, 7);
 
-// five indicator lights left
-uint8_t indicatorRightChannels[5] = {27,28,29,30,31};
-xpcc::led::TLC594XMultipleLed< controller > indicatorRightLed(indicatorRightChannels, 5);
-xpcc::led::Indicator indicatorRight(&indicatorRightLed);
-
+// io light
+xpcc::led::TLC594XLed< controller > io(16);
 
 // UART #######################################################################
 #if UART_ENABLED
@@ -178,9 +173,11 @@ ISR(INT0_vect)
 	{
 		buttonShortTimer.restart(buttonShortPressTime);
 		buttonLongTimer.restart(buttonLongPressTime);
+		io.on();
 	}
 	else
 	{
+		io.off();
 		if (buttonLongTimer.isExpired())
 		{
 			buttonStatus = BUTTON_LONG_PRESS;
@@ -280,8 +277,8 @@ MAIN_FUNCTION // ##############################################################
 		position.run();
 		beacon.run();
 		strobe.run();
-//		indicatorLeft.run();
-//		indicatorRight.run();
+		blue.run();
+		io.run();
 		
 		if (motionTimer.isExpired())
 		{
@@ -295,6 +292,10 @@ MAIN_FUNCTION // ##############################################################
 			EIMSK &= ~(1 << INT1);
 			inMotion = false;
 		}
+		if (io.getBrightness() > 0 && buttonLongTimer.isExpired())
+		{
+			io.off();
+		}
 		
 		if (inMotion != inMotionPrev)
 		{
@@ -305,6 +306,7 @@ MAIN_FUNCTION // ##############################################################
 				UART_STREAM("switching on");
 				white.on(fadeTimeout);
 				red.on(fadeTimeout);
+				blue.on(fadeTimeout);
 				redPulsing.start();
 				position.on(fadeTimeout);
 				beacon.start();
@@ -315,6 +317,7 @@ MAIN_FUNCTION // ##############################################################
 				UART_STREAM("switching off");
 				white.off(fadeTimeout);
 				red.off(fadeTimeout);
+				blue.off(fadeTimeout);
 				redPulsing.stop();
 				position.off(fadeTimeout);
 				beacon.stop();
