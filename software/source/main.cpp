@@ -21,9 +21,9 @@
 //                     +------------+
 //
 //                     +------------+
-//       (XLAT) PD5   9|           o|32  PD2 (BUTTON/INT0)
-//      (BLANK) PD6  10|            |31  PD1 (TXD)
-//              PD7  11|            |30  PD0 (RXD)
+//              PD5   9|           o|32  PD2 (BUTTON/INT0)
+//       (XLAT) PD6  10|            |31  PD1 (TXD)
+//      (BLANK) PD7  11|            |30  PD0 (RXD)
 //      (GSCLK) PB0  12|            |29  PC6 (RESET)
 //              PB1  13|            |28  PC5
 //      (VPROG) PB2  14|            |27  PC4
@@ -39,8 +39,8 @@ GPIO__INPUT(BUTTON, D, 2);
 GPIO__INPUT(MOTION, D, 3);
 
 GPIO__OUTPUT(VPROG, B, 2);
-GPIO__OUTPUT(XLAT, D, 5);
-GPIO__OUTPUT(BLANK, D, 6);
+GPIO__OUTPUT(XLAT, D, 6);
+GPIO__OUTPUT(BLANK, D, 7);
 GPIO__OUTPUT(GSCLK, B, 0);
 
 GPIO__INPUT(VOLTAGE, C, 0);
@@ -58,31 +58,31 @@ typedef xpcc::atmega::SpiMaster LedSpi;
 typedef xpcc::TLC594X< 32, LedSpi, XLAT, VPROG > controller;
 
 // 10 white LEDs in the front
-uint8_t whiteChannels[10] = {0,1,2,3,4,5,6,7,8,9};
+uint8_t whiteChannels[10] = {15,14,13,12,11,31,30,29,28,27};
 xpcc::led::TLC594XMultipleLed< controller > white(whiteChannels, 10);
 
 // six red LEDs in the back, four are constant
-uint8_t redChannels[4] = {10,11,12,13};
+uint8_t redChannels[4] = {4,5,9,7};
 xpcc::led::TLC594XMultipleLed< controller > red(redChannels, 4);
 
 // two are pulsing
-uint8_t redPulsingChannels[2] = {14,15};
+uint8_t redPulsingChannels[2] = {10,8};
 xpcc::led::TLC594XMultipleLed< controller > redPulsingLed(redPulsingChannels, 2);
-xpcc::led::Pulse redPulsing(&redPulsingLed, 1111);
+xpcc::led::Pulse redPulsing(&redPulsingLed, 1458);
 
 // two position lights
-uint8_t positionChannels[2] = {16,17};
+uint8_t positionChannels[2] = {0,3};
 xpcc::led::TLC594XMultipleLed< controller > position(positionChannels, 2);
 
 // two beacon lights
-uint8_t beaconChannels[2] = {18,19};
-xpcc::led::TLC594XMultipleLed< controller > beaconLed(beaconChannels, 2);
-xpcc::led::Indicator beacon(&beaconLed, 1567, 0.2f, 60, 100);
+uint8_t beaconChannels[1] = {6};
+xpcc::led::TLC594XMultipleLed< controller > beaconLed(beaconChannels, 1);
+xpcc::led::Indicator beacon(&beaconLed, 2467, 0.28f, 130, 200);
 
 // two strobe lights
-uint8_t strobeChannels[2] = {20,21};
+uint8_t strobeChannels[2] = {1,2};
 xpcc::led::TLC594XMultipleLed< controller > strobeLed(strobeChannels, 2);
-xpcc::led::DoubleIndicator strobe(&strobeLed, 1327, 0.06f, 0.075f, 0.05f, 0, 20);
+xpcc::led::DoubleIndicator strobe(&strobeLed, 1825, 0.06f, 0.075f, 0.05f, 0, 20);
 
 // five indicator lights left
 uint8_t indicatorLeftChannels[5] = {22,23,24,25,26};
@@ -95,14 +95,7 @@ xpcc::led::TLC594XMultipleLed< controller > indicatorRightLed(indicatorRightChan
 xpcc::led::Indicator indicatorRight(&indicatorRightLed);
 
 
-// TIMEOUT ####################################################################
-#include <xpcc/workflow.hpp>
-xpcc::Timeout<> motionTimer(10000);
-bool inMotion = false;
-bool inMotionPrev = false;
-
-
-// UART ######################################################################
+// UART #######################################################################
 #if UART_ENABLED
 typedef xpcc::atmega::BufferedUart0 Uart;
 Uart uart(38400);
@@ -117,6 +110,35 @@ xpcc::IOStream stream(device);
 #	define UART_STREAM(x)
 #	define UART(x)
 #endif
+
+
+// TIMEOUTS ###################################################################
+#include <xpcc/workflow.hpp>
+const uint16_t fadeTimeout = 750;
+xpcc::Timeout<> fadeOutTimer(fadeOutTimer);
+
+bool halfBrightness = true;
+const uint8_t lowBrightness = 2;
+const uint8_t highBrightness = 16;
+
+const uint16_t motionTimeout = 10000;
+xpcc::Timeout<> motionTimer(motionTimeout);
+bool inMotion = true;
+bool inMotionPrev = false;
+
+// true button is "closed", false button is "open"
+bool depressed = false;
+const uint16_t buttonLongPressTime = 1000;
+const uint16_t buttonShortPressTime = 250;
+xpcc::Timeout<> buttonLongTimer(buttonLongPressTime);
+xpcc::Timeout<> buttonShortTimer(buttonShortPressTime);
+
+enum
+{
+	BUTTON_NO_PRESS,
+	BUTTON_SHORT_PRESS,
+	BUTTON_LONG_PRESS,
+} buttonStatus;
 
 
 // INTERRUPTS #################################################################
@@ -143,15 +165,42 @@ ISR(INT1_vect)
 	motionTimer.restart(10000);
 	inMotion = true;
 	
-	UART('m');
+//	UART('m');
 }
 
 ISR(INT0_vect)
 {
-	bool depressed = !BUTTON::read();
-	(void) depressed;
+	depressed = !BUTTON::read();
 	// mode changes?
 	UART_STREAM("Button=" << depressed);
+	
+	if (depressed)
+	{
+		buttonShortTimer.restart(buttonShortPressTime);
+		buttonLongTimer.restart(buttonLongPressTime);
+	}
+	else
+	{
+		if (buttonLongTimer.isExpired())
+		{
+			buttonStatus = BUTTON_LONG_PRESS;
+			UART_STREAM("Long Press");
+		}
+		else
+		{
+			EIMSK |= (1 << INT1);
+			if (buttonShortTimer.isExpired())
+			{
+				buttonStatus = BUTTON_SHORT_PRESS;
+				UART_STREAM("Short Press");
+			}
+			else
+			{
+				buttonStatus = BUTTON_NO_PRESS;
+				UART_STREAM("No Press");
+			}
+		}
+	}
 }
 
 
@@ -160,6 +209,7 @@ MAIN_FUNCTION // ##############################################################
 	// Pull-up on Mode, Button and Motion pins
 	BUTTON::setInput(xpcc::atmega::PULLUP);
 	MOTION::setInput(xpcc::atmega::PULLUP);
+	RESET::setInput(xpcc::atmega::PULLUP);
 	TXD::setOutput();
 	RXD::setInput();
 	VOLTAGE::setInput();
@@ -170,7 +220,7 @@ MAIN_FUNCTION // ##############################################################
 	VPROG::setOutput(xpcc::gpio::LOW);
 	XLAT::setOutput(xpcc::gpio::LOW);
 	
-	LedSpi::initialize(LedSpi::MODE_0, LedSpi::PRESCALER_8);
+	LedSpi::initialize(LedSpi::MODE_0, LedSpi::PRESCALER_2);
 	set_sleep_mode(SLEEP_MODE_IDLE);
 	
 	// Set up interupts for the motion sensor and button
@@ -204,8 +254,23 @@ MAIN_FUNCTION // ##############################################################
 	UART_STREAM("\n\nRESTART\n");
 	
 	// 1.24V * 31.5 / (0.5kOhm) = 78.12mA
-	// 78.12mA / 64 * 20 = 24.4125
-	controller::initialize(0, 24, true, true);
+	// 64 / 78.12mA * 20mA = 16.41
+	controller::initialize(0, highBrightness, true, true);
+	// beacon
+	controller::setDotCorrection(6, 2*highBrightness);
+	// white front leds
+	controller::setDotCorrection(11, 63);
+	controller::setDotCorrection(12, 63);
+	controller::setDotCorrection(13, 63);
+	controller::setDotCorrection(14, 63);
+	controller::setDotCorrection(15, 63);
+	controller::setDotCorrection(17, 63);
+	controller::setDotCorrection(28, 63);
+	controller::setDotCorrection(29, 63);
+	controller::setDotCorrection(30, 63);
+	controller::setDotCorrection(31, 63);
+	controller::writeDotCorrection();
+	
 	
 	while (1)
 	{
@@ -215,11 +280,19 @@ MAIN_FUNCTION // ##############################################################
 		position.run();
 		beacon.run();
 		strobe.run();
-		indicatorLeft.run();
-		indicatorRight.run();
+//		indicatorLeft.run();
+//		indicatorRight.run();
 		
 		if (motionTimer.isExpired())
 		{
+			inMotion = false;
+		}
+		
+		if (buttonStatus == BUTTON_LONG_PRESS)
+		{
+			buttonStatus = BUTTON_NO_PRESS;
+			// disable motion sensor
+			EIMSK &= ~(1 << INT1);
 			inMotion = false;
 		}
 		
@@ -230,25 +303,52 @@ MAIN_FUNCTION // ##############################################################
 			if (inMotion)
 			{
 				UART_STREAM("switching on");
-				white.on(500);
-				red.on(500);
+				white.on(fadeTimeout);
+				red.on(fadeTimeout);
 				redPulsing.start();
-				position.on(500);
+				position.on(fadeTimeout);
 				beacon.start();
 				strobe.start();
 			}
 			else
 			{
 				UART_STREAM("switching off");
-				white.off(500);
-				red.off(500);
+				white.off(fadeTimeout);
+				red.off(fadeTimeout);
 				redPulsing.stop();
-				position.off(500);
+				position.off(fadeTimeout);
 				beacon.stop();
 				strobe.stop();
+				
+				fadeOutTimer.restart(fadeTimeout);
 			}
 		}
 		
-//		sleep_mode();
+		if (buttonStatus == BUTTON_SHORT_PRESS)
+		{
+			buttonStatus = BUTTON_NO_PRESS;
+			
+			uint8_t brightness = halfBrightness ? lowBrightness : highBrightness;
+			controller::setAllDotCorrection(brightness, true);
+			UART_STREAM("brightness=" << brightness);
+			halfBrightness = !halfBrightness;
+		}
+		
+		if (!inMotion && fadeOutTimer.isExpired())
+		{
+			// turn off all LED driver outputs
+			BLANK::set(xpcc::gpio::HIGH);
+			// go to deep sleep
+			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+			sleep_mode();
+			
+			UART_STREAM("wakeup");
+			// put mode back to idle
+			set_sleep_mode(SLEEP_MODE_IDLE);
+		}
+		else
+		{
+			sleep_mode();
+		}
 	}
 }
