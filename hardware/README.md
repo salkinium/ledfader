@@ -2,9 +2,6 @@ LED driver hardware
 ===================
 
 The ATmega328P can fade 32 LEDs using two TLC5940 12bit LED drivers.
-A vibration sensor and a button can be used to implement a power saving
-functions and mode changes.
-RX and TX can be accesses for debugging, but it might also allow use of Arduino.
 
 
 Parts List and Description
@@ -12,22 +9,37 @@ Parts List and Description
 
 ### Battery charger
 
-Perhaps using [Sparkfuns USB Lipo charger](
+Using [Sparkfuns USB Lipo charger](
 https://www.sparkfun.com/products/10401)?
-Might require some diodes.
 
 
 ### Battery
 
-A 3.7V LiPo can be used **without** voltage regulator.
-
+This circuit can be powered by a standard 3.7V LiPo/LiIon rechargeable battery **without** voltage regulator.
 
 ### Microcontroller
 
 A ATmega328P in a 32-pin TQFP package is used.
-The internal oscillator at 8MHz is used to reduce components.
-A precise clock is not required, so it is okay.
 
+### Resonator
+
+Small footprint, reasonable frequency stability of ±0.5% at 8MHz:
+[Reichelt part number CSTCE 8,00](
+http://www.reichelt.de/index.html?ARTICLE=89701
+).
+Also comes in 10MHz, 12Mhz and 16Mhz.
+
+Some background on the maximum possible frequency:
+The 3.7V LiPo battery voltage can be anywhere between 3V to 4.2V.
+
+The ATtiny44A is rated at 4Mhz @ 1.8V and 20Mhz @ 4.5V.
+The relationship between maximum frequency and VCC is linear in the region
+1.8V < VCC < 4.5V.
+
+So, for 3V the maximum frequency is
+(20 - 16)Mhz / (4.5 - 1.8)V * (3 - 1.8)V + 4Mhz = 11.1Mhz
+
+So, we can use a 8Mhz resonator, without stability issues.
 
 ### Tactile Switch
 
@@ -38,6 +50,7 @@ EVQPSG02K without Boss
 ### Vibration sensor
 
 MVS 0608.02 is used.
+It's not widely available so you can leave it out.
 
 
 ### Other parts
