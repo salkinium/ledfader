@@ -109,8 +109,9 @@ xpcc::IOStream stream(device);
 
 // TIMEOUTS ###################################################################
 #include <xpcc/workflow.hpp>
-const uint16_t fadeTimeout = 750;
-xpcc::Timeout<> fadeOutTimer(fadeOutTimer);
+const uint16_t fadeTime = 5000;
+xpcc::Timeout<> fadeOutTimer(fadeTime);
+xpcc::Timeout<> fadeInTimer(fadeTime);
 
 bool halfBrightness = false;
 const uint8_t lowBrightness = 2;
@@ -126,15 +127,13 @@ const uint16_t buttonShortPressTime = 50;
 xpcc::Timeout<> buttonLongTimer(buttonLongPressTime);
 xpcc::Timeout<> buttonShortTimer(buttonShortPressTime);
 
-const uint8_t buttonDebounceTime = 50;
-xpcc::Timeout<> buttonDebounceTimer(buttonDebounceTime);
-
 enum
 {
 	BUTTON_NO_PRESS,
 	BUTTON_SHORT_PRESS,
 	BUTTON_LONG_PRESS,
 } buttonStatus = BUTTON_SHORT_PRESS;
+bool depressed;
 
 
 // INTERRUPTS #################################################################
@@ -167,13 +166,15 @@ ISR(INT1_vect)
 ISR(INT0_vect)
 {
 	// true button is "closed", false button is "open"
-	bool depressed = !BUTTON::read();
-	static bool depressedPrev = true;
+	depressed = !BUTTON::read();
+	static bool depressedPrev = false;
 	UART_STREAM("Button=" << depressed);
 	
 	if (depressed != depressedPrev)
 	{
 		depressedPrev = depressed;
+		motionTimer.restart(10000);
+		inMotion = true;
 	
 		if (depressed)
 		{
@@ -285,10 +286,6 @@ MAIN_FUNCTION // ##############################################################
 			EIMSK &= ~(1 << INT1);
 			inMotion = false;
 		}
-		if (io.getBrightness() > 0 && buttonLongTimer.isExpired())
-		{
-			io.off();
-		}
 		
 		if (inMotion != inMotionPrev)
 		{
@@ -297,26 +294,26 @@ MAIN_FUNCTION // ##############################################################
 			if (inMotion)
 			{
 				UART_STREAM("switching on");
-				white.on(fadeTimeout);
-				red.on(fadeTimeout);
-				blue.on(fadeTimeout);
-				redPulsing.start();
-				position.on(fadeTimeout);
-				beacon.start();
-				strobe.start();
+				white.on(fadeTime);
+				red.on(fadeTime);
+				blue.on(fadeTime);
+				position.on(fadeTime);
+				
+				fadeInTimer.restart(fadeTime);
 			}
 			else
 			{
 				UART_STREAM("switching off");
-				white.off(fadeTimeout);
-				red.off(fadeTimeout);
-				blue.off(fadeTimeout);
+				white.off(fadeTime);
+				red.off(fadeTime);
+				blue.off(fadeTime);
+				position.off(fadeTime);
+				
 				redPulsing.stop();
-				position.off(fadeTimeout);
 				beacon.stop();
 				strobe.stop();
 				
-				fadeOutTimer.restart(fadeTimeout);
+				fadeOutTimer.restart(fadeTime);
 			}
 		}
 		
@@ -339,19 +336,30 @@ MAIN_FUNCTION // ##############################################################
 				controller::setDotCorrection(29, 0x3f);
 				controller::setDotCorrection(30, 0x3f);
 				controller::setDotCorrection(31, 0x3f);
-				controller::setDotCorrection(16, lowBrightness);
-				//{4,5,9,7};
-				controller::setDotCorrection(4, 4);
-				controller::setDotCorrection(5, 4);
-				controller::setDotCorrection(7, 4);
-				controller::setDotCorrection(9, 4);
+				controller::setDotCorrection(4, 6);
+				controller::setDotCorrection(5, 6);
+				controller::setDotCorrection(7, 6);
+				controller::setDotCorrection(9, 6);
 			}
+			controller::setDotCorrection(16, 1);
 			{
 				xpcc::atomic::Lock lock;
 				controller::writeDotCorrection();
 			}
 			UART_STREAM("brightness=" << brightness);
 			halfBrightness = !halfBrightness;
+		}
+		
+		if (depressed && buttonLongTimer.isExpired())
+		{
+			io.off();
+		}
+		
+		if (inMotion && !beacon.isRunning() && fadeInTimer.isExpired())
+		{
+			redPulsing.start();
+			beacon.start();
+			strobe.start();
 		}
 		
 		if (!inMotion && fadeOutTimer.isExpired())
