@@ -15,7 +15,7 @@ The sources are compiled using the [XPCC library][xpcc], which is used for
 GPIO, TLC5940 Drivers, Processing, Build System and Serial Debugging.  
 Enter the `source` directory
 
-	$ cd /path/to/bookla/software/source
+	$ cd /path/to/ledfader/software/source
 
 To compile, execute:
 
@@ -63,7 +63,7 @@ To install the XPCC build system on Linux (tested on Ubuntu 12.04):
 	gcc-avr binutils-avr avr-libc avrdude
 
 
-Follow the information on installing [the XPCC build system here][xpcc-install].
+More information on installing the XPCC build system can be [found here][xpcc-install].
 
 [xpcc]: http://xpcc.kreatives-chaos.com/
 [homebrew]: http://mxcl.github.com/homebrew/
