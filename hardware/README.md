@@ -37,14 +37,13 @@ Small footprint, reasonable frequency stability of ±0.5% at 8MHz: CSTCE 8,00.
 Some background on the maximum possible frequency:
 The 3.7V LiPo battery voltage can be anywhere between 3V to 4.2V.
 
-The ATmega328P is rated at 4Mhz @ 1.8V and 20Mhz @ 4.5V.
-The relationship between maximum frequency and VCC is linear in the region
-1.8V < VCC < 4.5V.
+The ATmega328P is rated at 10Mhz @ 2.7V and 20Mhz @ 4.5V.
+For 3V the maximum frequency is already above 10MHz, so we're fine.  
 
-So, for 3V the maximum frequency is:  
-(20 - 16)Mhz / (4.5 - 1.8)V * (3 - 1.8)V + 4Mhz = 11.1Mhz
+The lowest voltage for 8MHz is:  
+(8MHz - 4MHz) * (2.7 - 1.8)V / (10 - 4)MHz + 1.8V = 2.4V
 
-So we can use a 8Mhz resonator without stability issues.
+But the TLC5940 requires 3V minimum voltage, so never mind.
 
 ### Tactile Switch
 
