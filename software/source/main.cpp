@@ -112,7 +112,7 @@ xpcc::IOStream stream(device);
 const uint16_t fadeTimeout = 750;
 xpcc::Timeout<> fadeOutTimer(fadeOutTimer);
 
-bool halfBrightness = true;
+bool halfBrightness = false;
 const uint8_t lowBrightness = 2;
 const uint8_t highBrightness = 16;
 
@@ -121,19 +121,20 @@ xpcc::Timeout<> motionTimer(motionTimeout);
 bool inMotion = true;
 bool inMotionPrev = false;
 
-// true button is "closed", false button is "open"
-bool depressed = false;
 const uint16_t buttonLongPressTime = 1000;
-const uint16_t buttonShortPressTime = 250;
+const uint16_t buttonShortPressTime = 50;
 xpcc::Timeout<> buttonLongTimer(buttonLongPressTime);
 xpcc::Timeout<> buttonShortTimer(buttonShortPressTime);
+
+const uint8_t buttonDebounceTime = 50;
+xpcc::Timeout<> buttonDebounceTimer(buttonDebounceTime);
 
 enum
 {
 	BUTTON_NO_PRESS,
 	BUTTON_SHORT_PRESS,
 	BUTTON_LONG_PRESS,
-} buttonStatus;
+} buttonStatus = BUTTON_SHORT_PRESS;
 
 
 // INTERRUPTS #################################################################
@@ -165,36 +166,42 @@ ISR(INT1_vect)
 
 ISR(INT0_vect)
 {
-	depressed = !BUTTON::read();
-	// mode changes?
+	// true button is "closed", false button is "open"
+	bool depressed = !BUTTON::read();
+	static bool depressedPrev = true;
 	UART_STREAM("Button=" << depressed);
 	
-	if (depressed)
+	if (depressed != depressedPrev)
 	{
-		buttonShortTimer.restart(buttonShortPressTime);
-		buttonLongTimer.restart(buttonLongPressTime);
-		io.on();
-	}
-	else
-	{
-		io.off();
-		if (buttonLongTimer.isExpired())
+		depressedPrev = depressed;
+	
+		if (depressed)
 		{
-			buttonStatus = BUTTON_LONG_PRESS;
-			UART_STREAM("Long Press");
+			buttonShortTimer.restart(buttonShortPressTime);
+			buttonLongTimer.restart(buttonLongPressTime);
+			io.on();
 		}
 		else
 		{
-			EIMSK |= (1 << INT1);
-			if (buttonShortTimer.isExpired())
+			io.off();
+			if (buttonLongTimer.isExpired())
 			{
-				buttonStatus = BUTTON_SHORT_PRESS;
-				UART_STREAM("Short Press");
+				buttonStatus = BUTTON_LONG_PRESS;
+				UART_STREAM("Long Press");
 			}
 			else
 			{
-				buttonStatus = BUTTON_NO_PRESS;
-				UART_STREAM("No Press");
+				EIMSK |= (1 << INT1);
+				if (buttonShortTimer.isExpired())
+				{
+					buttonStatus = BUTTON_SHORT_PRESS;
+					UART_STREAM("Short Press");
+				}
+				else
+				{
+					buttonStatus = BUTTON_NO_PRESS;
+					UART_STREAM("No Press");
+				}
 			}
 		}
 	}
@@ -252,21 +259,7 @@ MAIN_FUNCTION // ##############################################################
 	
 	// 1.24V * 31.5 / (0.5kOhm) = 78.12mA
 	// 64 / 78.12mA * 20mA = 16.41
-	controller::initialize(0, highBrightness, true, true);
-	// beacon
-	controller::setDotCorrection(6, 2*highBrightness);
-	// white front leds
-	controller::setDotCorrection(11, 63);
-	controller::setDotCorrection(12, 63);
-	controller::setDotCorrection(13, 63);
-	controller::setDotCorrection(14, 63);
-	controller::setDotCorrection(15, 63);
-	controller::setDotCorrection(17, 63);
-	controller::setDotCorrection(28, 63);
-	controller::setDotCorrection(29, 63);
-	controller::setDotCorrection(30, 63);
-	controller::setDotCorrection(31, 63);
-	controller::writeDotCorrection();
+	controller::initialize(0, highBrightness, true, false);
 	
 	
 	while (1)
@@ -332,7 +325,31 @@ MAIN_FUNCTION // ##############################################################
 			buttonStatus = BUTTON_NO_PRESS;
 			
 			uint8_t brightness = halfBrightness ? lowBrightness : highBrightness;
-			controller::setAllDotCorrection(brightness, true);
+			controller::setAllDotCorrection(brightness, false);
+			if (!halfBrightness)
+			{
+				controller::setDotCorrection(6, 2*highBrightness);
+				controller::setDotCorrection(11, 0x3f);
+				controller::setDotCorrection(12, 0x3f);
+				controller::setDotCorrection(13, 0x3f);
+				controller::setDotCorrection(14, 0x3f);
+				controller::setDotCorrection(15, 0x3f);
+				controller::setDotCorrection(27, 0x3f);
+				controller::setDotCorrection(28, 0x3f);
+				controller::setDotCorrection(29, 0x3f);
+				controller::setDotCorrection(30, 0x3f);
+				controller::setDotCorrection(31, 0x3f);
+				controller::setDotCorrection(16, lowBrightness);
+				//{4,5,9,7};
+				controller::setDotCorrection(4, 4);
+				controller::setDotCorrection(5, 4);
+				controller::setDotCorrection(7, 4);
+				controller::setDotCorrection(9, 4);
+			}
+			{
+				xpcc::atomic::Lock lock;
+				controller::writeDotCorrection();
+			}
 			UART_STREAM("brightness=" << brightness);
 			halfBrightness = !halfBrightness;
 		}
