@@ -3,6 +3,15 @@ LED driver hardware
 
 The ATmega328P can fade 32 LEDs using two TLC5940 12bit LED drivers.
 
+Programmer
+----------
+
+The ATmega is programmed using the standard ISP interface, however to save space,
+a smaller footprint is used.
+On standard PCBs with 1.6mm thickness, the board fits exacly between to RM 2.00 pins,
+so I just use a 2x3 RM 2.00 pin header to attack my programmer to it from the side.
+This takes up a *lot* less space and the connection is still relatively secure.
+
 
 Parts List and Description
 --------------------------
