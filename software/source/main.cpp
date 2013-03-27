@@ -113,7 +113,7 @@ const uint16_t fadeTime = 5000;
 xpcc::Timeout<> fadeOutTimer(fadeTime);
 xpcc::Timeout<> fadeInTimer(fadeTime);
 
-bool halfBrightness = false;
+bool halfBrightness = true;
 const uint8_t lowBrightness = 2;
 const uint8_t highBrightness = 16;
 
@@ -122,17 +122,25 @@ xpcc::Timeout<> motionTimer(motionTimeout);
 bool inMotion = true;
 bool inMotionPrev = false;
 
+
 const uint16_t buttonLongPressTime = 1000;
 const uint16_t buttonShortPressTime = 50;
 xpcc::Timeout<> buttonLongTimer(buttonLongPressTime);
 xpcc::Timeout<> buttonShortTimer(buttonShortPressTime);
 
+bool justWokeUp = false;
+const uint16_t motionWakeTime = 2000;
+const uint16_t motionWakeIntervalTime = 200;
+xpcc::Timeout<> motionWakeTimer(motionWakeTime);
+xpcc::Timeout<> motionWakeIntervalTimer(motionWakeIntervalTime);
+
 enum
 {
 	BUTTON_NO_PRESS,
+	BUTTON_DEPRESSED,
 	BUTTON_SHORT_PRESS,
 	BUTTON_LONG_PRESS,
-} buttonStatus = BUTTON_SHORT_PRESS;
+} buttonState = BUTTON_SHORT_PRESS;
 bool depressed;
 
 
@@ -157,9 +165,23 @@ ISR(TIMER0_COMPB_vect)
 ISR(INT1_vect)
 {
 	// restart the motion timer with 10 seconds
-	motionTimer.restart(10000);
-	inMotion = true;
-	
+	if (justWokeUp)
+	{
+		if (motionWakeTimer.isExpired() && !motionWakeIntervalTimer.isExpired())
+		{
+			justWokeUp = false;
+			inMotion = true;
+			motionTimer.restart(10000);
+		}
+		
+		motionWakeIntervalTimer.restart(motionWakeIntervalTime);
+		fadeOutTimer.restart(motionWakeIntervalTime);
+	}
+	else
+	{
+		inMotion = true;
+		motionTimer.restart(10000);
+	}
 //	UART('m');
 }
 
@@ -175,35 +197,41 @@ ISR(INT0_vect)
 		depressedPrev = depressed;
 		motionTimer.restart(10000);
 		inMotion = true;
-	
+		
 		if (depressed)
 		{
 			buttonShortTimer.restart(buttonShortPressTime);
 			buttonLongTimer.restart(buttonLongPressTime);
+			buttonState = BUTTON_DEPRESSED;
 			io.on();
 		}
 		else
 		{
-			io.off();
-			if (buttonLongTimer.isExpired())
+			if (buttonState == BUTTON_DEPRESSED && !justWokeUp)
 			{
-				buttonStatus = BUTTON_LONG_PRESS;
-				UART_STREAM("Long Press");
-			}
-			else
-			{
-				EIMSK |= (1 << INT1);
-				if (buttonShortTimer.isExpired())
+				if (buttonLongTimer.isExpired())
 				{
-					buttonStatus = BUTTON_SHORT_PRESS;
-					UART_STREAM("Short Press");
+					buttonState = BUTTON_LONG_PRESS;
+					UART_STREAM("Long Press");
 				}
 				else
 				{
-					buttonStatus = BUTTON_NO_PRESS;
-					UART_STREAM("No Press");
+					if (buttonShortTimer.isExpired())
+					{
+						buttonState = BUTTON_SHORT_PRESS;
+						UART_STREAM("Short Press");
+					}
+					else
+					{
+						buttonState = BUTTON_NO_PRESS;
+						UART_STREAM("No Press");
+					}
 				}
 			}
+			
+			io.off();
+			EIMSK |= (1 << INT1);
+			justWokeUp = false;
 		}
 	}
 }
@@ -265,23 +293,14 @@ MAIN_FUNCTION // ##############################################################
 	
 	while (1)
 	{
-		white.run();
-		red.run();
-		redPulsing.run();
-		position.run();
-		beacon.run();
-		strobe.run();
-		blue.run();
-		io.run();
-		
 		if (motionTimer.isExpired())
 		{
 			inMotion = false;
 		}
 		
-		if (buttonStatus == BUTTON_LONG_PRESS)
+		if (buttonState == BUTTON_LONG_PRESS)
 		{
-			buttonStatus = BUTTON_NO_PRESS;
+			buttonState = BUTTON_NO_PRESS;
 			// disable motion sensor
 			EIMSK &= ~(1 << INT1);
 			inMotion = false;
@@ -317,9 +336,9 @@ MAIN_FUNCTION // ##############################################################
 			}
 		}
 		
-		if (buttonStatus == BUTTON_SHORT_PRESS)
+		if (buttonState == BUTTON_SHORT_PRESS)
 		{
-			buttonStatus = BUTTON_NO_PRESS;
+			buttonState = BUTTON_NO_PRESS;
 			
 			uint8_t brightness = halfBrightness ? lowBrightness : highBrightness;
 			controller::setAllDotCorrection(brightness, false);
@@ -350,7 +369,7 @@ MAIN_FUNCTION // ##############################################################
 			halfBrightness = !halfBrightness;
 		}
 		
-		if (depressed && buttonLongTimer.isExpired())
+		if (buttonState == BUTTON_DEPRESSED && buttonLongTimer.isExpired())
 		{
 			io.off();
 		}
@@ -362,17 +381,28 @@ MAIN_FUNCTION // ##############################################################
 			strobe.start();
 		}
 		
+		white.run();
+		red.run();
+		redPulsing.run();
+		position.run();
+		beacon.run();
+		strobe.run();
+		blue.run();
+		io.run();
+		
 		if (!inMotion && fadeOutTimer.isExpired())
 		{
 			// turn off all LED driver outputs
 			BLANK::set(xpcc::gpio::HIGH);
 			// go to deep sleep
 			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+			justWokeUp = true;
 			sleep_mode();
-			
-			UART_STREAM("wakeup");
 			// put mode back to idle
 			set_sleep_mode(SLEEP_MODE_IDLE);
+			
+			UART_STREAM("wakeup");
+			motionWakeTimer.restart(motionWakeTime);
 		}
 		else
 		{
